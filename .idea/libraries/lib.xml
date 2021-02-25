@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/test/lib/tools.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test/lib/reggie-dl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test/lib/jini-ext.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test/lib/reggie.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test/lib/JarRunner.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test/lib/jini-core.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

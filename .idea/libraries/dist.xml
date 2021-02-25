@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="dist">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/develop/dist/Bailiff-dl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/develop/dist/Bailiff.jar!/" />
+      <root url="jar://$PROJECT_DIR$/develop/dist/Dexter.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
