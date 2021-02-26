@@ -4,12 +4,9 @@
 package tag.dexter;
 
 import java.io.*;		// TODO remove the asterisk
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
-import net.jini.core.event.RemoteEventListener;
 import net.jini.core.lookup.*;
 import net.jini.lookup.*;
 
@@ -21,14 +18,12 @@ import tag.bailiff.BailiffInterface;
  * evolved agents. Since objects of class Dexter move between JVMs, it
  * must be implement the Serializable marker interface.
  */
-public class Dexter
-        implements
-        Serializable
+public class Dexter implements Serializable
 {
   /**
    * Identification string used in debug messages.
    */  
-  private UUID id = UUID.randomUUID();
+  private String id = "anon";
   
   /**
    * Default sleep time so that we have time to track what it does.
@@ -58,6 +53,17 @@ public class Dexter
    */
   protected boolean debug = false;
 
+  private boolean it = false;
+
+  public void setIt(boolean b){
+    this.it = b;
+  }
+
+  public boolean getIt(){
+    return this.it;
+  }
+
+
   /**
    * The string name of the Bailiff service interface, used when
    * querying the Jini lookup server.
@@ -73,15 +79,6 @@ public class Dexter
    */
   protected transient ServiceDiscoveryManager SDM;
 
-  //added
-  // I am "it" or not
-  protected boolean it = false;
-
-  //the Bailiff that I am in
-  BailiffInterface myBailiff = null;
-  //the victim that I want to tag
-  UUID victim = null;
-
   /**
    * This Jini service template is created in Dexter's constructor and
    * used in the topLevel method to find Bailiffs. The service
@@ -90,24 +87,33 @@ public class Dexter
    */
   protected ServiceTemplate bailiffTemplate;
 
-//  /**
-//   * Sets the id string of this Dexter.
-//   * @param id The id string. A null argument is replaced with the
-//   * empty string.
-//   */
-//  public void setId(String id) {
-//    this.id = (id != null) ? id : "";
-//  }
+  /**
+   * Sets the id string of this Dexter.
+   * @param id The id string. A null argument is replaced with the
+   * empty string.
+   */
 
+  private BailiffInterface currentBailiff;
 
-    //added
-    //getter for id
-    public UUID getId() {
-        return id;
-    }
+  public void setCurrentBailiff(BailiffInterface bi) {
+    this.currentBailiff = bi;
+  }
 
+  public BailiffInterface getCurrentBailiff() {
+    return this.currentBailiff;
+  }
 
-    /**
+  public void setId(String id) {
+    this.id = (id != null) ? id : "";
+  }
+
+  public String getId() {
+    return this.id;
+  }
+
+  private String target;
+
+  /**
    * Sets the restraint sleep duration.
    * @param ms The number of milliseconds in restraint sleep.
    */
@@ -213,6 +219,21 @@ public class Dexter
 
       long retryInterval = 0;	// incremented when no Bailiffs are found
 
+      // if isIt
+      if(it){
+        // try to tag target.
+        if (currentBailiff != null){
+          boolean tagSuccess = currentBailiff.tag(target);
+          // if tag successful
+          if(tagSuccess){
+            // isIt = false
+            it = false;
+             System.out.println(id + " IS NOT 'it' ANYMORE");
+          }
+        }
+
+      }
+
       // Sleep a bit so that humans can keep up.
       
       debugMsg("Is here - entering restraint sleep.");
@@ -255,28 +276,51 @@ public class Dexter
 
       while (0 < nofItems) {
 
-	// Randomly pick one of the remaining entries
-	int idx = rnd.nextInt(nofItems);
+          // Randomly pick one of the remaining entries
+          int idx = rnd.nextInt(nofItems);
 
-	boolean accepted = false;	    // Assume it will fail
-	Object obj = svcItems[idx].service; // Get the service object
-	BailiffInterface bfi = null;
+          boolean accepted = false;        // Assume it will fail
+          Object obj = svcItems[idx].service; // Get the service object
+          BailiffInterface bfi = null;
 
-	debugMsg("Trying to ping...");
+          debugMsg("Trying to ping...");
 
-	if (obj instanceof BailiffInterface) {
-	  bfi = (BailiffInterface) obj;
-	  try {
-	    String response = bfi.ping( this ); // Ping it
-	    debugMsg(response);
-	    accepted = true;	// It worked!
-          //added
-        myBailiff = bfi;
-	  }
-	  catch (java.rmi.RemoteException rex) {
-	    debugMsg("Ping fail: " + bfi);
-	  }
-	}
+          if (obj instanceof BailiffInterface) {
+              bfi = (BailiffInterface) obj;
+              try {
+                  String response = bfi.ping(); // Ping it
+                  debugMsg(response);
+                  accepted = true;    // It worked!
+              } catch (java.rmi.RemoteException rex) {
+                  debugMsg("Ping fail: " + bfi);
+              }
+          }
+          // if I am it:
+          if (it) {
+              List<String> ids = bfi.getPlayerList();
+              // ask if bailiff is empty
+              if(ids.size() > 0){
+
+                  if (ids.size() == 1 && ids.contains(id)) {
+                      accepted = false;
+                  } else {
+                      for (int i = 0; i < ids.size(); i++) {
+                          System.out.println("IDS: in bailiff" + i + " " + ids.get(i));
+
+                          if (!ids.get(i).equals(id)) {
+                              target = ids.get(i);
+                              break;
+                          }
+                      }
+                  }
+              } else {
+                  accepted = false;
+              }
+        }else{
+              // ask if in bailiff has it
+              boolean hasIt = bfi.hasIt();
+              if(hasIt) accepted = false;
+          }
 
 	debugMsg(accepted ? "Accepted." : "Not accepted.");
 
@@ -291,6 +335,10 @@ public class Dexter
 	  debugMsg("Trying to jump...");
 
 	  try {
+	      if(currentBailiff != null){
+	          currentBailiff.remove(id);
+          }
+
 	    bfi.migrate(this, "topLevel", new Object [] {});
 	    // SUCCESS
 	    SDM.terminate();	// shut down Service Discovery Manager
@@ -321,42 +369,11 @@ public class Dexter
       "-id  string  Set the id string printed by debug messages",
       "-rs  ms      Set the restraint sleep in milliseconds",
       "-qs  ms      Set the Jini lookup query retry delay",
-      "-mr  n       Set the Jini lookup query max results limit"
+      "-mr  n       Set the Jini lookup query max results limit",
+            "-it     initiate it"
     };
     for (String s : msg)
       System.out.println(s);
-  }
-
-  //added
-  //tag myself
-  public boolean tag() throws RemoteException {
-      if (!it){
-          it = true; // update my state to be 'it'
-          List<UUID> victimList = myBailiff.getDexterList();
-          int random = (int)(Math.random()*(victimList.size()));
-          //randomly choose a victim
-          victim = victimList.get(random);
-          tagVictim();
-          return true;
-      }else{
-          return false;
-      }
-  }
-
-  //added
-  //to tag others
-  public boolean tagVictim(){
-      try {
-          //we have to let the myBailiff to tag the victim,
-          //we can not directly tag the victim
-          //because the victim instance that we get from the myBailiff is a copy
-          if (myBailiff.tag(victim)) {// update my state to be not it
-              it = false;
-              return true;
-          }
-      }
-      catch (RemoteException rex) {}
-      return false;
   }
 
   // The main method is only used by the initial launch. After the
@@ -394,6 +411,8 @@ public class Dexter
 	  state = 3;
 	else if (av.equals("-mr"))
 	  state = 4;
+	else if(av.equals("-it"))
+	    dx.setIt(true);
 	else {
 	  System.err.println("Unknown commandline argument: " + av);
 	  return;
@@ -401,8 +420,7 @@ public class Dexter
 	break;
 
       case 1:
-          System.out.println("using UUId now, user can not change it");
-	//dx.setId(av);
+	dx.setId(av);
 	state = 0;
 	break;
 

@@ -3,11 +3,7 @@
 
 package tag.bailiff;
 
-import net.jini.core.event.RemoteEventListener;
-import tag.dexter.Dexter;
-
 import java.util.List;
-import java.util.UUID;
 
 /**
  * This interface is for the Bailiff's clients. The clients are mobile
@@ -15,24 +11,24 @@ import java.util.UUID;
  */
 public interface BailiffInterface
   extends
-    java.rmi.Remote
-{
+    java.rmi.Remote {
   /**
    * Returns a string which confirms communication with the Bailiff
    * service instance.
    */
-  public String ping (Dexter dexter)
-    throws
-      java.rmi.RemoteException;
+  public String ping()
+          throws
+          java.rmi.RemoteException;
 
   /**
    * Returns a property of the Bailiff.
+   *
    * @param key The case-insensitive property key to retrieve.
    * @return The property string or null.
    */
-  public String getProperty (String key)
-    throws
-      java.rmi.RemoteException;
+  public String getProperty(String key)
+          throws
+          java.rmi.RemoteException;
 
   /**
    * The entry point for mobile code.
@@ -40,25 +36,32 @@ public interface BailiffInterface
    * naming the callback method and an array of arguments which must
    * map against the parameters of the callback method.
    *
-   * @param obj The object (to execute).
-   * @param cb The name of the method to call as the program of obj.
+   * @param obj  The object (to execute).
+   * @param cb   The name of the method to call as the program of obj.
    * @param args The parameters for the callback method. Note that if
-   * the method has a signature without arguments the value of args
-   * should be an empty array. Setting args to null will not work.
-   * @exception java.rmi.RemoteException Thrown if there is an RMI problem.
-   * @exception java.lang.NoSuchMethodException Thrown if the proposed
-   * callback is not found (which happen if the name is spelled wrong,
-   * the number of arguments is wrong or are of the wrong type).
-   * 
+   *             the method has a signature without arguments the value of args
+   *             should be an empty array. Setting args to null will not work.
+   * @throws java.rmi.RemoteException        Thrown if there is an RMI problem.
+   * @throws java.lang.NoSuchMethodException Thrown if the proposed
+   *                                         callback is not found (which happen if the name is spelled wrong,
+   *                                         the number of arguments is wrong or are of the wrong type).
    */
-  public void migrate (Object obj, String cb, Object [] args)
-    throws
-      java.rmi.RemoteException,
-      java.lang.NoSuchMethodException;
+  public void migrate(Object obj, String cb, Object[] args)
+          throws
+          java.rmi.RemoteException,
+          java.lang.NoSuchMethodException;
 
-  //added
-  public boolean tag(UUID aid) throws java.rmi.RemoteException;
 
-  //added
-  public List<UUID> getDexterList() throws java.rmi.RemoteException;
+  // get players currently in the bailiff
+  public List<String> getPlayerList() throws java.rmi.RemoteException;
+
+  // Query each player if they are 'it' or not
+  // implemented by iterate over the player map to check if they are 'it'
+  public boolean hasIt() throws java.rmi.RemoteException;
+
+  // tag a player if it is not "it"
+  public boolean tag(String target) throws java.rmi.RemoteException;
+
+  // remove a player from a baliff
+  public void remove(String id) throws java.rmi.RemoteException;
 }

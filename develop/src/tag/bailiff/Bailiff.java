@@ -15,7 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.jini.core.entry.*;
-import net.jini.core.event.RemoteEventListener;
 import net.jini.core.lookup.*;
 import net.jini.core.discovery.*;
 import net.jini.lease.*;
@@ -78,10 +77,10 @@ public class Bailiff
   // join and leave one or more Jini lookup servers.
   protected JoinManager bf_joinmanager;
 
-  //protected List<Dexter> dexterList = new ArrayList<Dexter>();
-    // a map of Dexter and their id
-    //added
-  protected HashMap<UUID, Dexter> dexterList = new HashMap<>();
+
+  // map to store all the players
+    private  Map<String, Dexter> playerMap;
+
   /**
    * If debug is enabled, prints a message on stdout.
    * @s The message string
@@ -146,10 +145,14 @@ public class Bailiff
      * @throws NoSuchMethodException Thrown if the entry point specified
      * in the constructor can not be found.
      */
-    public void initialize () throws java.lang.NoSuchMethodException
+    public void initialize (BailiffInterface b) throws java.lang.NoSuchMethodException
     {
       myMethod = myObj.getClass ().getMethod (myCb, myParms);
       setContextClassLoader (myObj.getClass ().getClassLoader ());
+
+        Dexter dexter = (Dexter) myObj;
+        dexter.setCurrentBailiff(b);
+        playerMap.put(dexter.getId(), dexter);
     }
 
     /**
@@ -167,6 +170,26 @@ public class Bailiff
     }
   } // class Agitator
 
+    // ??????????????
+    // ??????????????
+//    static class BailiffStatePrinter extends TimerTask {
+//
+//    Bailiff b;
+//
+//    public BailiffStatePrinter(Bailiff b){
+//      this.b = b;
+//    }
+//
+//    public void run() {
+//      System.out.print("\033[H\033[2J");
+//      System.out.flush();
+//      for (java.util.Map.Entry<String, Dexter> entry : b.playerMap.entrySet()) {
+//        String itStr = entry.getValue().getIt() ? " **IS IT**" : "";
+//        System.out.println( entry.getKey() + " " + itStr);
+//      }
+//    }
+//  }
+
   /* ================ B a i l i f f I n t e r f a c e ================ */
   
   /**
@@ -177,13 +200,11 @@ public class Bailiff
    * @returns The ping response.
    * @throws RemoteException
    */
-  public String ping (Dexter dexter) throws java.rmi.RemoteException
+  public String ping () throws java.rmi.RemoteException
   {
     log.fine ("ping");
-    //added
-    dexterList.put(dexter.getId(), dexter);
 
-    return
+    return 
       String.format("Ping response from Bailiff %s on host %s [%s]",
 		    id,
 		    myHostName,
@@ -237,38 +258,56 @@ public class Bailiff
 			   Arrays.toString(args)));
     
     Agitator agt = new Agitator (obj, cb, args);
-    agt.initialize ();
+    agt.initialize ((BailiffInterface) this);
     agt.start ();
   }
 
-  //added
-  public boolean tag(UUID aid) throws java.rmi.RemoteException {
-      Dexter a = dexterList.get(aid);
-      return a.tag();
+  public List<String> getPlayerList() throws java.rmi.RemoteException{
+      List<String> playerList = new ArrayList<String>(playerMap.keySet());
+      return playerList;
   }
 
-  //added
-  public List<UUID> getDexterList() throws java.rmi.RemoteException{
-      return (List<UUID>) dexterList.keySet();
+  public boolean hasIt() throws java.rmi.RemoteException{
+    for(Dexter dexter: playerMap.values()){
+        if(dexter.getIt()){
+            return true;
+        }
+    }
+    return false;
   }
+
+  public boolean tag(String id) throws java.rmi.RemoteException{
+      Dexter dexter = playerMap.get(id);
+      if(dexter != null){
+          dexter.setIt(true);
+          return true;
+      }
+
+      return false;
+  }
+
+  public void remove(String id) throws java.rmi.RemoteException{
+    playerMap.remove(id);
+  }
+
 
   /* ================ C o n s t r u c t o r ================ */
 
   /**
    * Creates a new Bailiff service instance.
-//   * @param room Informational text field used to designate the 'room'
-//   * (physical or virtual) the Bailiff is running in.
-//   * @param user Information text field used to designate the 'user'
-//   * who is associated with the Bailiff instance.
-//   * @param debug If true, diagnostic messages will be logged to the
-//   * provided Logger instance. This parameter is overridden if the
-//   * class local debug variable is set to true in the source code.
+   * @param room Informational text field used to designate the 'room'
+   * (physical or virtual) the Bailiff is running in.
+   * @param user Information text field used to designate the 'user'
+   * who is associated with the Bailiff instance.
+   * @param debug If true, diagnostic messages will be logged to the
+   * provided Logger instance. This parameter is overridden if the
+   * class local debug variable is set to true in the source code.
    * @param log If debug is true, this parameter can be a Logger instance
    * configured to accept entries. If log is null a default Logger instance
    * is created.
    * @throws RemoteException
-//   * @throws UnknownHostException Thrown if the local host address can not
-//   * be determined.
+   * @throws UnknownHostException Thrown if the local host address can not
+   * be determined.
    * @throws IOException Thrown if there is an I/O problem.
    */
   public Bailiff (String id, String info, Logger log)
@@ -277,6 +316,9 @@ public class Bailiff
       java.net.UnknownHostException,
       java.io.IOException
   {
+      // create the player map
+      playerMap = new HashMap<String, Dexter>();
+
     // Process constructor parameters
 
     if (log != null)
@@ -445,8 +487,11 @@ public class Bailiff
     if (System.getSecurityManager() == null)
       System.setSecurityManager(new SecurityManager());
 
-    new Bailiff (id, info, log);
+    Bailiff nb = new Bailiff (id, info, log);
 
+//    Timer timer = new Timer();
+//    TimerTask task = new BailiffStatePrinter(nb);
+//    timer.schedule(task, 2000, 200);
   } // main
 
 } // class Bailiff
