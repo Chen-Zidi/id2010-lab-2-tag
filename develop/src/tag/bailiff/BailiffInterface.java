@@ -52,16 +52,20 @@ public interface BailiffInterface
           java.lang.NoSuchMethodException;
 
 
-  // get players currently in the bailiff
-  public List<String> getPlayerList() throws java.rmi.RemoteException;
 
+  //added
+  // get players currently in the bailiff
+  public List<String> getDexterList() throws java.rmi.RemoteException;
+
+  //added
   // Query each player if they are 'it' or not
-  // implemented by iterate over the player map to check if they are 'it'
   public boolean hasIt() throws java.rmi.RemoteException;
 
+  //added
   // tag a player if it is not "it"
-  public boolean tag(String target) throws java.rmi.RemoteException;
+  public boolean tag(String victimUid) throws java.rmi.RemoteException;
 
+  //added
   // remove a player from a baliff
-  public void remove(String id) throws java.rmi.RemoteException;
+  public void remove(String uid) throws java.rmi.RemoteException;
 }

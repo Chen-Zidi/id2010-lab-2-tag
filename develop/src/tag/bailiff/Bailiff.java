@@ -78,8 +78,9 @@ public class Bailiff
   protected JoinManager bf_joinmanager;
 
 
+  //added
   // map to store all the players
-    private  Map<String, Dexter> playerMap;
+    private  Map<String, Dexter> dexterMap;
 
   /**
    * If debug is enabled, prints a message on stdout.
@@ -150,9 +151,16 @@ public class Bailiff
       myMethod = myObj.getClass ().getMethod (myCb, myParms);
       setContextClassLoader (myObj.getClass ().getClassLoader ());
 
+
+      //???
+      //question here
+      //if I uncomment the following two lines, there is a class no def error in the dexter side
         Dexter dexter = (Dexter) myObj;
-        dexter.setCurrentBailiff(b);
-        playerMap.put(dexter.getId(), dexter);
+        dexterMap.put(dexter.getUId(), dexter);
+
+      //dexter.setCurrentBailiff(b);
+        System.out.println("a new Dexter join: uid " + dexter.getUId());
+        System.out.println("current dexter map size: " + dexterMap.size());
     }
 
     /**
@@ -170,25 +178,6 @@ public class Bailiff
     }
   } // class Agitator
 
-    // ??????????????
-    // ??????????????
-//    static class BailiffStatePrinter extends TimerTask {
-//
-//    Bailiff b;
-//
-//    public BailiffStatePrinter(Bailiff b){
-//      this.b = b;
-//    }
-//
-//    public void run() {
-//      System.out.print("\033[H\033[2J");
-//      System.out.flush();
-//      for (java.util.Map.Entry<String, Dexter> entry : b.playerMap.entrySet()) {
-//        String itStr = entry.getValue().getIt() ? " **IS IT**" : "";
-//        System.out.println( entry.getKey() + " " + itStr);
-//      }
-//    }
-//  }
 
   /* ================ B a i l i f f I n t e r f a c e ================ */
   
@@ -262,51 +251,62 @@ public class Bailiff
     agt.start ();
   }
 
-  public List<String> getPlayerList() throws java.rmi.RemoteException{
-      List<String> playerList = new ArrayList<String>(playerMap.keySet());
-      return playerList;
+  //added
+  //get all Dexters in the current Bailiff
+  public List<String> getDexterList() throws java.rmi.RemoteException{
+    List<String> dList = new ArrayList<String>(dexterMap.keySet());
+    return dList;
   }
 
+  //added
+  //if I have an it player
   public boolean hasIt() throws java.rmi.RemoteException{
-    for(Dexter dexter: playerMap.values()){
-        if(dexter.getIt()){
-            return true;
-        }
+    for(Dexter dexter: dexterMap.values()){
+      if(dexter.getIt()){
+        return true;
+      }
     }
     return false;
   }
 
-  public boolean tag(String id) throws java.rmi.RemoteException{
-      Dexter dexter = playerMap.get(id);
-      if(dexter != null){
-          dexter.setIt(true);
-          return true;
-      }
+  //added
+  //to tag a victim
+  public boolean tag(String uid) throws java.rmi.RemoteException{
+    Dexter dexter = dexterMap.get(uid);
+    if(dexter != null){
+      dexter.setMyItTag();
+      return true;
+    }
 
-      return false;
+    return false;
   }
 
-  public void remove(String id) throws java.rmi.RemoteException{
-    playerMap.remove(id);
+  //added
+  //remove the dexter
+  public void remove(String uid) throws java.rmi.RemoteException{
+    dexterMap.remove(uid);
+    System.out.println("a Dexter removes: uid " + uid);
+    System.out.println("current dexter map size: " + dexterMap.size());
   }
+
 
 
   /* ================ C o n s t r u c t o r ================ */
 
   /**
    * Creates a new Bailiff service instance.
-   * @param room Informational text field used to designate the 'room'
+   //* @param room Informational text field used to designate the 'room'
    * (physical or virtual) the Bailiff is running in.
-   * @param user Information text field used to designate the 'user'
+   //* @param user Information text field used to designate the 'user'
    * who is associated with the Bailiff instance.
-   * @param debug If true, diagnostic messages will be logged to the
+   //* @param debug If true, diagnostic messages will be logged to the
    * provided Logger instance. This parameter is overridden if the
    * class local debug variable is set to true in the source code.
    * @param log If debug is true, this parameter can be a Logger instance
    * configured to accept entries. If log is null a default Logger instance
    * is created.
    * @throws RemoteException
-   * @throws UnknownHostException Thrown if the local host address can not
+   //* @throws UnknownHostException Thrown if the local host address can not
    * be determined.
    * @throws IOException Thrown if there is an I/O problem.
    */
@@ -316,8 +316,8 @@ public class Bailiff
       java.net.UnknownHostException,
       java.io.IOException
   {
-      // create the player map
-      playerMap = new HashMap<String, Dexter>();
+      // initialize the dexter map
+      dexterMap = new HashMap<String, Dexter>();
 
     // Process constructor parameters
 

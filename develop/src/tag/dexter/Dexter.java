@@ -6,6 +6,7 @@ package tag.dexter;
 import java.io.*;		// TODO remove the asterisk
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 import net.jini.core.lookup.*;
 import net.jini.lookup.*;
@@ -53,17 +54,6 @@ public class Dexter implements Serializable
    */
   protected boolean debug = false;
 
-  private boolean it = false;
-
-  public void setIt(boolean b){
-    this.it = b;
-  }
-
-  public boolean getIt(){
-    return this.it;
-  }
-
-
   /**
    * The string name of the Bailiff service interface, used when
    * querying the Jini lookup server.
@@ -87,31 +77,71 @@ public class Dexter implements Serializable
    */
   protected ServiceTemplate bailiffTemplate;
 
+    //added
+    //if I am it
+    private boolean it = false;
+
+    //added
+    //unique uid
+    private UUID uid = UUID.randomUUID();
+
+    //added
+    //choosen victim if I am 'it'
+    private String victim;
+
+    //current Bailiff
+    private BailiffInterface myBailiff;
+
+    //getter of uid
+    public String getUId() {
+        return this.uid.toString();
+    }
+
+
+    //whe player being tagged
+    //set myself to be 'it'
+    public boolean setMyItTag(){
+        if (!it)/* tag succeeded */{
+            // update my state to be 'it'
+
+            it = true;
+            System.out.println("I am it!");
+            return true;
+        }
+        return false;
+    }
+
+    //getter of it
+    public boolean getIt(){
+        return this.it;
+    }
+
+    //setter of it
+    public void setIt(boolean b){
+        it = b;
+    }
+
+    //added
+    //set my Bailiff
+//    public void setBailiff(BailiffInterface b) {
+//      this.myBailiff = b;
+//  }
+
+    //added
+    //get my Bailiff
+//  public BailiffInterface getBailiff() {
+//      return this.myBailiff;
+//
+//  }
+
   /**
    * Sets the id string of this Dexter.
    * @param id The id string. A null argument is replaced with the
    * empty string.
    */
-
-  private BailiffInterface currentBailiff;
-
-  public void setCurrentBailiff(BailiffInterface bi) {
-    this.currentBailiff = bi;
-  }
-
-  public BailiffInterface getCurrentBailiff() {
-    return this.currentBailiff;
-  }
-
   public void setId(String id) {
     this.id = (id != null) ? id : "";
   }
-
-  public String getId() {
-    return this.id;
-  }
-
-  private String target;
 
   /**
    * Sets the restraint sleep duration.
@@ -219,20 +249,23 @@ public class Dexter implements Serializable
 
       long retryInterval = 0;	// incremented when no Bailiffs are found
 
-      // if isIt
-      if(it){
-        // try to tag target.
-        if (currentBailiff != null){
-          boolean tagSuccess = currentBailiff.tag(target);
-          // if tag successful
-          if(tagSuccess){
-            // isIt = false
-            it = false;
-             System.out.println(id + " IS NOT 'it' ANYMORE");
-          }
-        }
-
-      }
+      // if I am it
+//      if(it){
+//        // try to tag a victim
+//        if (myBailiff != null){
+//          //choose a victim
+//
+//          victim = myBailiff.getDexterList().get(0);
+//          boolean catchVictim = myBailiff.tag(victim);
+//
+//          if(catchVictim){//if I caught a victim
+//
+//             it = false;
+//             System.out.println(id + " am not 'it' now! ");
+//          }
+//        }
+//
+//      }
 
       // Sleep a bit so that humans can keep up.
       
@@ -295,34 +328,8 @@ public class Dexter implements Serializable
                   debugMsg("Ping fail: " + bfi);
               }
           }
-          // if I am it:
-          if (it) {
-              List<String> ids = bfi.getPlayerList();
-              // ask if bailiff is empty
-              if(ids.size() > 0){
 
-                  if (ids.size() == 1 && ids.contains(id)) {
-                      accepted = false;
-                  } else {
-                      for (int i = 0; i < ids.size(); i++) {
-                          System.out.println("IDS: in bailiff" + i + " " + ids.get(i));
-
-                          if (!ids.get(i).equals(id)) {
-                              target = ids.get(i);
-                              break;
-                          }
-                      }
-                  }
-              } else {
-                  accepted = false;
-              }
-        }else{
-              // ask if in bailiff has it
-              boolean hasIt = bfi.hasIt();
-              if(hasIt) accepted = false;
-          }
-
-	debugMsg(accepted ? "Accepted." : "Not accepted.");
+          debugMsg(accepted ? "Accepted." : "Not accepted.");
 
 	// If the ping failed, remove that entry from the list.
 	// Otherwise, go ahead and attempt the jump.
@@ -335,9 +342,9 @@ public class Dexter implements Serializable
 	  debugMsg("Trying to jump...");
 
 	  try {
-	      if(currentBailiff != null){
-	          currentBailiff.remove(id);
-          }
+//	      if(myBailiff != null){
+//	          myBailiff.remove(id);
+//          }
 
 	    bfi.migrate(this, "topLevel", new Object [] {});
 	    // SUCCESS
@@ -370,7 +377,7 @@ public class Dexter implements Serializable
       "-rs  ms      Set the restraint sleep in milliseconds",
       "-qs  ms      Set the Jini lookup query retry delay",
       "-mr  n       Set the Jini lookup query max results limit",
-            "-it     initiate it"
+      "-it          initiate it tag"//edited
     };
     for (String s : msg)
       System.out.println(s);
