@@ -59,7 +59,8 @@
 	 includes="**/Bailiff$$Agitator.class
 	           **/Bailiff$$1.class
 		   **/Bailiff.class
-		   **/BailiffInterface.class">
+		   **/BailiffInterface.class
+          **/Dexter.class">
     </jar>
 
     <jar basedir="${dir.build}" compress="true"

@@ -4,6 +4,7 @@
 package tag.bailiff;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * This interface is for the Bailiff's clients. The clients are mobile
@@ -12,6 +13,9 @@ import java.util.List;
 public interface BailiffInterface
   extends
     java.rmi.Remote {
+
+
+
   /**
    * Returns a string which confirms communication with the Bailiff
    * service instance.
@@ -68,4 +72,15 @@ public interface BailiffInterface
   //added
   // remove a player from a baliff
   public void remove(String uid) throws java.rmi.RemoteException;
+
+  //added
+  //get a dexter's id from the Bailiff using uid
+  //id actually works like tha name here
+  public String getDexterId(String uid) throws java.rmi.RemoteException;
+
+  //added
+  //get Bailiff uid
+  public String getBailiffUid() throws java.rmi.RemoteException;
+
+
 }
