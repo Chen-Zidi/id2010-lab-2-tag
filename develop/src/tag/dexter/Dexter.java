@@ -86,7 +86,7 @@ public class Dexter implements Serializable {
     private UUID uid = UUID.randomUUID();
 
     //added
-    //choosen victim if I am 'it'
+    //chosen victim if I am 'it'
     private String victim;
 
     //current Bailiff
@@ -111,7 +111,7 @@ public class Dexter implements Serializable {
     }
 
 
-    //whe player being tagged
+    //when player being tagged
     //set myself to be 'it'
     public boolean setMyItTag() {
         //System.out.println(id + ": get tag request");
@@ -461,11 +461,16 @@ public class Dexter implements Serializable {
                 Object obj = svcItems[idx].service; // Get the service object
                 bfiTemp = (BailiffInterface) obj;
 
-                while(bfiTemp.getBailiffUid().equals(myBailiff.getBailiffUid())){
-                   idx = rnd.nextInt(nofItems);
-                   obj = svcItems[idx].service; // Get the service object
-                   bfiTemp = (BailiffInterface) obj;
-                }//not enter current Bailiff
+                if(svcItems.length > 1){
+                    while(bfiTemp.getBailiffUid().equals(myBailiff.getBailiffUid())){
+                        idx = rnd.nextInt(nofItems);
+                        obj = svcItems[idx].service; // Get the service object
+                        bfiTemp = (BailiffInterface) obj;
+                    }//not enter current Bailiff with danger
+                }else{
+                    System.out.println(id +"("+ jumpCount +")"+ ": No other bailiff to escape :(. ");
+                }
+
 
                 while (0 < nofItems) {//try to get one Bailiff to ping
 
